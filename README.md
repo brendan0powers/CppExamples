@@ -2,26 +2,66 @@
 Practical examples for new C++ features
 
 ### Finally
-A very simple class that implements the finally feature in C++. 
-It ensures that a piece of code always runs when a function or
-block exits, regardless of the reason. It can be used to clean up
-state when there are no existing RAII classes, or when using C
-code that has not been wrapped by a C++ class. Freeing malloced
-memory would be a good example.
+An implementation of the finally keywork in C++. The idea behind a finally keyword
+is to ensure a piece of code runs when a function exits. This is important with 
+languages that support exceptions. Since any function you call may throw an exception,
+you must assume that your function could exit at any time. If your function exits, you must
+ensure you've cleaned up any resources (locks, files, DB transactions) you allocated at the
+start of the function. This problem is solved in c++ with the RAII pattern. However, the RAII 
+pattern requires you to have a class writen for the specific task you are doing. In some 
+cases it does not make sense to write an entire new class just to clean up a one-off resource. 
+In this case, a finally keyword would be usefull.
 
-For example, here is a simple function that prints a message when
+In the Finally example, I have implement a finally keyword using a combination of a macro, and
+a lambda function. the FINALLY macro declares a class named ScopedLambda. The ScopedLambda
+class stores the lambda function that runs when the class goes out of scope. This means that
+any code contained in the FINALLY macro will run when the function exits. Regardless of the
+reason or time of exit.
+
+Here's an example of a function that prints a message when the function exits. In this case,
 an exception is thrown.
 
 ```C++
 void testFunc()
 {
-  Finally f([&]() {
+  FINALLY(cout() << "This text will print when the function ends." << endl;);
+  
+  throw runtime_error("Some exception happened");
+}
+```
+
+A simpler implementation of the finally concept would be to just use the ScopedLambda
+class, and leave it's set up to the user. Here is an equivelent example to the above.
+
+```C++
+void testFunc()
+{
+  ScopedLambda finally([&]() {
     cout() << "This text will print when the function ends." << endl;
   });
   
   throw runtime_error("Some exception happened");
 }
 ```
+
+The macro implentation has some advantages over this example. The most obvious 
+being that the user need not declare a variable. It's quite commont to forget to
+name the variable when using RAII classes. For example 
+
+```C++
+ScopedLambda([&]{cout << "Test;});
+```
+
+This cope would create, and immediatly destroy the object, causing the cleanup
+code to run early. These sorts of mistakes are usualy easy to catch, but sometimes
+cause serous bugs. The other advantage of the macro implementation is less obvoius.
+Due to a quirck of C++ lambdas, it is not possible to know their type. This means
+you cannot directly store a lambda. The macro-less implementation of ScopedLambda
+must use the std::function() object. This object has a fair amount of overhead, and
+may not be suitable for performance critical applications. I generally prefer to avoid
+premature optimiztion. Avoiding use of the std::function object would seem to meet that
+criteria. However, I'd like to use the FINALLY keyword in all parts of the applications I
+write, and not worry too much about it's impact on performance.
 
 ### Units
 The Units example demonstrates how to use user defined literals to handle

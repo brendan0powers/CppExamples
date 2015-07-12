@@ -63,6 +63,63 @@ premature optimiztion. Avoiding use of the std::function object would seem to me
 criteria. However, I'd like to use the FINALLY keyword in all parts of the applications I
 write, and not worry too much about it's impact on performance.
 
+### TypeErasure
+An implementation of ["Duck Typing"](https://en.wikipedia.org/wiki/Duck_typing) in c++.
+Traditianally, c++ duck typing is implemented via templates. While the initial implementation
+of type errasure may be more complicated than a simple template usage, the use of type erasure
+can be much simpler to read. For example, the sample below takes any object with a void quack()
+function, and quacks. The real magic in this sample happens in the implementation of DuckLikeObject.
+However, the user of the DuckLikeObject does not have to know anything about it's implementation
+details, and can simply use it as if it were a real object.
+
+```C++
+
+//A class that acts like a duck
+class Duck {
+public:
+    void quack()
+    {
+        cout << "Duck quacks" << endl;
+    }
+};
+
+//A class that also acts like a duck
+class Person {
+public:
+    void quack()
+    {
+        cout << "Person pretends to quack like a duck" << endl;
+    }
+};
+
+//This function takes some kind of duck like object, and "quacks"
+void quack(DuckLikeObject duck)
+{
+    duck.quack();
+}
+
+int main()
+{
+    cout << "Let's quack!" << endl;
+
+    Duck d;
+    Person p;
+    Chair c;
+
+    quack(d);   //Duck is a duck like object  
+    quack(p);   //Person is a duck like object
+    
+    //Compile error
+    quack(c);   //Chair has no quack(), is not duck like
+
+    return 0;
+}
+```
+
+I will not go into detail on the implementation of DuckLike object. I'm not
+entirely sure how usefull type erasure is in practice. For more details, see
+this [CppCon 14 talk](https://youtu.be/0I0FD3N5cgM)
+
 ### Units
 The Units example demonstrates how to use user defined literals to handle
 numbers in a type safe way. For example, the function below
